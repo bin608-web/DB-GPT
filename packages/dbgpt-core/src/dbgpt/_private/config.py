@@ -22,7 +22,7 @@ class Config(metaclass=Singleton):
         self.SERVER_LIGHT_MODE = False
 
         # Gradio language version: en, zh
-        self.LANGUAGE = os.getenv("LANGUAGE", "zh")
+        self.LANGUAGE = os.getenv("LANGUAGE", "en")
         self.DBGPT_WEBSERVER_PORT = int(os.getenv("DBGPT_WEBSERVER_PORT", 5670))
 
         self.debug_mode = False

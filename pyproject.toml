@@ -1,6 +1,6 @@
 [project]
 name = "dbgpt-mono"
-version = "0.7.1"
+version = "0.7.2"
 description = """DB-GPT is an experimental open-source project that uses localized GPT \
 large models to interact with your data and environment. With this solution, you can be\
  assured that there is no risk of data leakage, and your data is 100% private and secure.\
@@ -20,9 +20,6 @@ dbgpt-serve = { workspace = true }
 dbgpt-app = { workspace = true }
 dbgpt-acc-auto = { workspace = true }
 dbgpt-acc-flash-attn = { workspace = true }
-
-#[tool.setuptools]
-#packages = ["packages"]  # 将 "dbgpt" 替换为你的主包名
 
 [[tool.uv.index]]
 name = "testpypi"

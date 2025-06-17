@@ -54,15 +54,6 @@ logger = logging.getLogger(__name__)
             default="73@TuGraph",
             description=_("TuGraph password"),
         ),
-        # Parameter.build_from(
-        #     _("database"),
-        #     "database",
-        #     str,
-        #     optional=True,
-        #     default="neo4j",
-        #     description=_("TuGraph database"),
-        # )
-
     ],
 )
 @dataclass
