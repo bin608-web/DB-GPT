@@ -298,7 +298,9 @@ class Service(
         """
         db_config = self._dao.get_one({"id": datasource_id})
         if not db_config:
-            raise HTTPException(status_code=404, detail="datasource not found")
+            db_config = self._dao.get_one({"db_name": datasource_id})
+            if not db_config:
+                raise HTTPException(status_code=404, detail="datasource not found")
 
         self._db_summary_client.delete_db_profile(db_config.db_name)
 
