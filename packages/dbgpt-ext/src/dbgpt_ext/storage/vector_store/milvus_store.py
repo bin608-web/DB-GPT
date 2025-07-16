@@ -649,15 +649,17 @@ class MilvusStore(VectorStoreBase):
     def vector_name_exists(self):
         """Whether vector name exists."""
         try:
-            from pymilvus import utility
-        except ImportError:
-            raise ValueError(
-                "Could not import pymilvus python package. "
-                "Please install it with `pip install pymilvus`."
-            )
+            if not self._milvus_client.has_collection(self.collection_name):
+                logger.info(f"Collection {self.collection_name} does not exist")
+                return False
 
-        """is vector store name exist."""
-        return utility.has_collection(self.collection_name)
+            stats = self._milvus_client.get_collection_stats(self.collection_name)
+            row_count = stats.get("row_count", 0)
+            return row_count > 0
+
+        except Exception as e:
+            logger.error(f"vector_name_exists error, {str(e)}")
+            return False
 
     def delete_vector_name(self, vector_name: str):
         """Delete vector name."""
@@ -726,14 +728,30 @@ class MilvusStore(VectorStoreBase):
         return metadata_filter_expr
 
     def truncate(self):
-        """Truncate milvus collection."""
-        logger.info(f"begin truncate milvus collection:{self.collection_name}")
-        from pymilvus import utility
-
+        """检测pymilvus安装"""
+        try:
+            from pymilvus import Collection, utility
+        except ImportError:
+            raise ValueError(
+                "Could not import pymilvus python package. "
+                "Please install it with `pip install pymilvus`."
+            )
+        """安全清空 Milvus summary collection 中所有数据，但不删除 collection 本身"""
+        logger.info(f"Begin truncate Milvus collection: {self.collection_name}")
+        # 先判断 collection 是否存在
         if utility.has_collection(self.collection_name):
-            utility.drop_collection(self.collection_name)
-
-        logger.info(f"truncate milvus collection {self.collection_name} success")
+            collection = Collection(self.collection_name)
+            # Load collection 必须调用，才能执行 delete
+            collection.load()
+            # 通过pk_id删除所有数据
+            collection.delete("pk_id >= 0")
+            # flush 确保数据删除被提交
+            collection.flush()
+            logger.info(f"Truncate Milvus collection {self.collection_name} success")
+        else:
+            logger.warning(
+                f"Collection {self.collection_name} not found, skip truncate."
+            )
 
     def full_text_search(
         self, text: str, topk: int = 10, filters: Optional[MetadataFilters] = None
