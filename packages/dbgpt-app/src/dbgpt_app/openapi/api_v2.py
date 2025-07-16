@@ -129,6 +129,7 @@ async def chat_completions(
         or request.chat_mode == ChatMode.CHAT_DATA.value
         or request.chat_mode == ChatMode.CHAT_DB_QA.value
         or request.chat_mode == ChatMode.CHAT_DASHBOARD.value
+        or request.chat_mode == ChatMode.CHAT_DIALOGUE_DB_QA.value
     ):
         with root_tracer.start_span(
             "get_chat_instance",

@@ -57,6 +57,8 @@ class ChatDbQaRequestBody(BaseModel):
     model: Optional[str] = Field(
         default=None, description="Qwen-72B"
     )
+    temperature: Optional[float] = 0.5
+    max_new_tokens: Optional[int] = 5000
 
 
 @router.post("/chat_db_qa", dependencies=[Depends(check_api_key)])
@@ -66,8 +68,11 @@ async def chat_db_qa(
     async def generate_text():
         async for data in client.chat_stream(
                 messages=request.messages,
-                model="Qwen-72B",
-                chat_mode="chat_with_db_qa",
+                model=request.model,
+                chat_mode="chat_dialogue_db_qa",
+                temperature=request.temperature,
+                max_new_tokens=request.max_new_tokens,
+                sys_code="chat_dialogue_db_qa",
                 chat_param=request.DB_NAME,
                 conv_uid=request.conv_uid
         ):

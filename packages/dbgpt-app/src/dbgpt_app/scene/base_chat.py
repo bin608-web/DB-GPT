@@ -96,6 +96,7 @@ def _build_conversation(
         if len(chat_mode.param_types()) > 0:
             param_type = chat_mode.param_types()[0]
         param_value = chat_param.select_param
+
     return StorageConversation(
         chat_param.chat_session_id,
         chat_mode=chat_mode.value(),

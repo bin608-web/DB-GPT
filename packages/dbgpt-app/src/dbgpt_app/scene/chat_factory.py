@@ -34,6 +34,12 @@ class ChatFactory(metaclass=Singleton):
         from dbgpt_app.scene.chat_db.professional_qa.prompt import (  # noqa: F401, F811
             prompt,
         )
+        from dbgpt_app.scene.chat_db.professional_qa.chat_dialogue import (  # noqa: F401
+            ChatDialogueDbQA,
+        )
+        from dbgpt_app.scene.chat_db.professional_qa.prompt_dialogue import (  # noqa: F401, F811
+            prompt,
+        )
         from dbgpt_app.scene.chat_knowledge.refine_summary.chat import (  # noqa: F401
             ExtractRefineSummary,
         )

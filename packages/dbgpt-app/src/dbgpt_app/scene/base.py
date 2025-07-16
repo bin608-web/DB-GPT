@@ -53,6 +53,14 @@ class ChatScene(Enum):
         describe="Have a Professional Conversation with Metadata.",
         param_types=["DB Select"],
     )
+
+    ChatDialogueDbQA = Scene(
+        code="chat_dialogue_db_qa",
+        name="Chat DB",
+        describe="Have a Professional Conversation with Metadata.",
+        param_types=["DB Select"],
+    )
+
     ChatExecution = Scene(
         code="chat_execution",
         name="Use Plugin",

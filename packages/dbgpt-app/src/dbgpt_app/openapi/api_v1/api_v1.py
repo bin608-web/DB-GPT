@@ -735,6 +735,8 @@ async def stream_generator(
     try:
         if incremental and not openai_format:
             raise ValueError("Incremental response must be openai-compatible format.")
+        flag = 0
+        flag_text = ""
         async for chunk in chat.stream_call(
             text_output=text_output, incremental=incremental
         ):
@@ -752,19 +754,26 @@ async def stream_generator(
                 if output.has_thinking:
                     think_text = output.thinking_text
                 if incremental:
-                    choice_data = ChatCompletionResponseStreamChoice(
-                        index=0,
-                        delta=DeltaMessage(
-                            role="assistant", content=text, reasoning_content=think_text
-                        ),
-                    )
-                    chunk = ChatCompletionStreamResponse(
-                        id=stream_id, choices=[choice_data], model=model_name
-                    )
-                    _content = json.dumps(
-                        chunk.dict(exclude_unset=True), ensure_ascii=False
-                    )
-                    yield f"data: {_content}\n\n"
+                    if  "``" in text:
+                        flag_text = text
+                        flag += 1
+                    else:
+                        if flag > 0:
+                            text = flag_text + text + "\n"
+                            flag = 0
+                        choice_data = ChatCompletionResponseStreamChoice(
+                            index=0,
+                            delta=DeltaMessage(
+                                role="assistant", content=text, reasoning_content=think_text
+                            ),
+                        )
+                        chunk = ChatCompletionStreamResponse(
+                            id=stream_id, choices=[choice_data], model=model_name
+                        )
+                        _content = json.dumps(
+                            chunk.dict(exclude_unset=True), ensure_ascii=False
+                        )
+                        yield f"data: {_content}\n\n"
                 else:
                     choice_data = ChatCompletionResponseChoice(
                         index=0,
