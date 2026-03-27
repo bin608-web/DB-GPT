@@ -436,8 +436,6 @@ class BaseChat(ABC):
                 text_msg = model_output.text if model_output.has_text else ""
                 view_msg = self.stream_plugin_call(text_msg)
                 view_msg = model_output.gen_text_with_thinking(new_text=view_msg)
-                view_msg = view_msg.replace("\n", "\\n")
-
                 if text_output:
                     full_text = view_msg
                     # Return the incremental text
@@ -604,7 +602,7 @@ class BaseChat(ABC):
                 view_message = parsed_output.gen_text_with_thinking(
                     new_text=view_message
                 )
-            return ai_response_text, view_message.replace("\n", "\\n")
+            return ai_response_text, view_message
         except BaseAppException as e:
             raise ContextAppException(e.message, e.view, model_output) from e
 

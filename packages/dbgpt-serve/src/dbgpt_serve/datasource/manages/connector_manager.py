@@ -8,6 +8,7 @@ from dbgpt.component import BaseComponent, ComponentType, SystemApp
 from dbgpt.core.awel.flow import ResourceMetadata
 from dbgpt.datasource.base import BaseConnector, BaseDatasourceParameters
 from dbgpt.util.annotations import Deprecated
+from dbgpt.util.configure.manager import _resolve_env_vars
 from dbgpt.util.executor_utils import ExecutorFactory
 from dbgpt.util.parameter_utils import _get_parameter_descriptions
 from dbgpt_ext.datasource.schema import DBType
@@ -46,6 +47,7 @@ class ConnectorManager(BaseComponent):
         Load all connector classes.
         """
         from dbgpt.datasource.rdbms.base import RDBMSConnector  # noqa: F401
+        from dbgpt_ext.datasource.conn_neo4j import Neo4jConnector  # noqa: F401
         from dbgpt_ext.datasource.conn_spark import SparkConnector  # noqa: F401
         from dbgpt_ext.datasource.conn_tugraph import TuGraphConnector  # noqa: F401
         from dbgpt_ext.datasource.rdbms.conn_clickhouse import (  # noqa: F401
@@ -175,6 +177,11 @@ class ConnectorManager(BaseComponent):
             db_name (str): database name
         """
         db_config = self.storage.get_db_config(db_name)
+
+        pwd = db_config["db_pwd"]
+        if pwd:
+            db_config["db_pwd"] = _resolve_env_vars(pwd)
+
         db_type = DBType.of_db_type(db_config.get("db_type"))
         if not db_type:
             raise ValueError("Unsupported Db Type！" + db_config.get("db_type"))
@@ -203,10 +210,10 @@ class ConnectorManager(BaseComponent):
 
             try:
                 ext_config = db_config.get("ext_config")
-                db_json = json.loads(ext_config)
+                db_json = json.loads(ext_config) if ext_config else {}
                 schema = db_json.get("schema", None)
-            except json.JSONDecodeError:
-                # 处理解码失败的情况
+            except (json.JSONDecodeError, TypeError):
+                # Handle JSON decode failure and None/invalid types
                 db_json = {}
                 schema = None
             return connect_instance.from_uri_db(  # type: ignore
@@ -299,6 +306,10 @@ class ConnectorManager(BaseComponent):
             bool: True if connection is successful.
         """
         try:
+            pwd = request.params.get("password")
+            if pwd:
+                request.params["password"] = _resolve_env_vars(pwd)
+
             param = self._create_parameters(request)
             _connector = self.create_connector(param)
             return True

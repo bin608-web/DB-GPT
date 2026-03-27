@@ -2,6 +2,7 @@ import ChatHeader from '@/new-components/chat/header/ChatHeader';
 import { ChatContentContext } from '@/pages/chat';
 import { VerticalAlignBottomOutlined, VerticalAlignTopOutlined } from '@ant-design/icons';
 import dynamic from 'next/dynamic';
+import { useSearchParams } from 'next/navigation';
 import React, {
   forwardRef,
   useCallback,
@@ -14,6 +15,9 @@ import React, {
 } from 'react';
 
 const ChatCompletion = dynamic(() => import('@/new-components/chat/content/ChatCompletion'), { ssr: false });
+const OpenCodeChatCompletion = dynamic(() => import('@/new-components/chat/content/OpenCodeChatCompletion'), {
+  ssr: false,
+});
 
 // eslint-disable-next-line no-empty-pattern
 const ChatContentContainer = ({ className }: { className?: string }, ref: React.ForwardedRef<any>) => {
@@ -25,6 +29,13 @@ const ChatContentContainer = ({ className }: { className?: string }, ref: React.
   const { history } = useContext(ChatContentContext);
   const allowAutoScroll = useRef<boolean>(true);
   const animationFrameRef = useRef<number | null>(null);
+
+  // Get scene from URL params to determine which completion component to render
+  const searchParams = useSearchParams();
+  const scene = searchParams?.get('scene') ?? '';
+  // Use OpenCode style for all scenes (chat_normal, chat_agent, chat_knowledge, etc.)
+  // This provides a consistent modern UI experience
+  const useOpenCodeStyle = true;
 
   useImperativeHandle(ref, () => {
     return scrollRef.current;
@@ -79,7 +90,8 @@ const ChatContentContainer = ({ className }: { className?: string }, ref: React.
         currentScrollRef.removeEventListener('scroll', handleScroll);
       }
     };
-  }, [handleScroll]);  const scrollToBottomSmooth = useCallback((forceScroll = false) => {
+  }, [handleScroll]);
+  const scrollToBottomSmooth = useCallback((forceScroll = false) => {
     if (!scrollRef.current) return;
 
     // For force scroll (new messages), bypass allowAutoScroll check
@@ -117,7 +129,7 @@ const ChatContentContainer = ({ className }: { className?: string }, ref: React.
   const lastMessage = useMemo(() => {
     const last = history[history.length - 1];
     return last ? { context: last.context, thinking: last.thinking } : null;
-  }, [history]);  // Track previous history length to detect new messages
+  }, [history]); // Track previous history length to detect new messages
   const prevHistoryLengthRef = useRef(history.length);
 
   useEffect(() => {
@@ -149,7 +161,8 @@ const ChatContentContainer = ({ className }: { className?: string }, ref: React.
         cancelAnimationFrame(animationFrameRef.current);
       }
     };
-  }, []);  const scrollToTop = useCallback(() => {
+  }, []);
+  const scrollToTop = useCallback(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTo({
         top: 0,
@@ -171,7 +184,7 @@ const ChatContentContainer = ({ className }: { className?: string }, ref: React.
     <div className={`flex flex-1 overflow-hidden relative ${className || ''}`}>
       <div ref={scrollRef} className='h-full w-full mx-auto overflow-y-auto'>
         <ChatHeader isScrollToTop={isScrollToTop} />
-        <ChatCompletion />
+        {useOpenCodeStyle ? <OpenCodeChatCompletion /> : <ChatCompletion />}
       </div>
 
       {showScrollButtons && (

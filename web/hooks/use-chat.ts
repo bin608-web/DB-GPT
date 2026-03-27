@@ -4,7 +4,7 @@ import { getUserId } from '@/utils';
 import { HEADER_USER_ID_KEY } from '@/utils/constants/index';
 import { EventStreamContentType, fetchEventSource } from '@microsoft/fetch-event-source';
 import { message } from 'antd';
-import { useCallback, useContext, useState } from 'react';
+import { useCallback, useContext, useRef, useState } from 'react';
 
 type Props = {
   queryAgentURL?: string;
@@ -24,10 +24,12 @@ type ChatParams = {
 
 const useChat = ({ queryAgentURL = '/api/v1/chat/completions', app_code }: Props) => {
   const [ctrl, setCtrl] = useState<AbortController>({} as AbortController);
+  const lastMessageRef = useRef<string>('');
   const { scene } = useContext(ChatContext);
   const chat = useCallback(
     async ({ data, chatId, onMessage, onClose, onDone, onError, ctrl }: ChatParams) => {
       ctrl && setCtrl(ctrl);
+      lastMessageRef.current = '';
       if (!data?.user_input && !data?.doc_id) {
         message.warning(i18n.t('no_context_tip'));
         return;
@@ -46,23 +48,14 @@ const useChat = ({ queryAgentURL = '/api/v1/chat/completions', app_code }: Props
         });
       }
 
-      // Debug: Log the params object to verify prompt_code is included
-      console.log('DEBUG - API request params:', params);
-      console.log('DEBUG - prompt_code in params:', params.prompt_code);
-      console.log('DEBUG - data object received:', data);
-
       try {
-        // Debug: Log the actual request body that will be sent
-        const requestBody = JSON.stringify(params);
-        console.log('DEBUG - API request body:', requestBody);
-
         await fetchEventSource(`${process.env.API_BASE_URL ?? ''}${queryAgentURL}`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             [HEADER_USER_ID_KEY]: getUserId() ?? '',
           },
-          body: requestBody,
+          body: JSON.stringify(params),
           signal: ctrl ? ctrl.signal : null,
           openWhenHidden: true,
           async onopen(response) {
@@ -79,6 +72,7 @@ const useChat = ({ queryAgentURL = '/api/v1/chat/completions', app_code }: Props
           },
           onclose() {
             ctrl && ctrl.abort();
+            lastMessageRef.current = '';
             onClose?.();
           },
           onerror(err) {
@@ -86,22 +80,46 @@ const useChat = ({ queryAgentURL = '/api/v1/chat/completions', app_code }: Props
           },
           onmessage: event => {
             let message = event.data;
+            let needReplaceNewline = false;
+            let parsedData;
+
             try {
+              parsedData = JSON.parse(message);
               if (scene === 'chat_agent') {
-                message = JSON.parse(message).vis;
+                if (parsedData.vis) {
+                  message = parsedData.vis;
+                } else {
+                  needReplaceNewline = true;
+                  message = parsedData.choices?.[0]?.message?.content;
+                }
               } else {
-                message = JSON.parse(message);
+                message = parsedData.choices?.[0]?.message?.content;
               }
             } catch {
-              message.replaceAll('\\n', '\n');
+              if (typeof message === 'string') {
+                message = message.replaceAll('\\n', '\n');
+              }
             }
             if (typeof message === 'string') {
+              if (needReplaceNewline) {
+                message = message.replaceAll('\\n', '\n');
+              }
               if (message === '[DONE]') {
+                lastMessageRef.current = '';
                 onDone?.();
               } else if (message?.startsWith('[ERROR]')) {
                 onError?.(message?.replace('[ERROR]', ''));
               } else {
-                onMessage?.(message);
+                if (scene === 'chat_react_agent') {
+                  const previous = lastMessageRef.current;
+                  const delta = message.startsWith(previous) ? message.slice(previous.length) : message;
+                  lastMessageRef.current = message;
+                  if (delta) {
+                    onMessage?.(delta);
+                  }
+                } else {
+                  onMessage?.(message);
+                }
               }
             } else {
               onMessage?.(message);

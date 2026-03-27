@@ -602,9 +602,11 @@ class Service(BaseService[KnowledgeSpaceEntity, SpaceServeRequest, SpaceServeRes
 
                     chunk_docs = assembler.get_chunks()
                     doc.chunk_size = len(chunk_docs)
+                    # this will be the start point where file_id is added
                     vector_ids = await assembler.apersist(
                         max_chunks_once_load=max_chunks_once_load,
                         max_threads=max_threads,
+                        file_id=doc.id,
                     )
             doc.status = SyncStatus.FINISHED.name
             doc.result = "document persist into index store success"
@@ -626,9 +628,13 @@ class Service(BaseService[KnowledgeSpaceEntity, SpaceServeRequest, SpaceServeRes
             ]
             self._chunk_dao.create_documents_chunks(chunk_entities)
         except Exception as e:
+            import traceback
+
             doc.status = SyncStatus.FAILED.name
             doc.result = "document embedding failed" + str(e)
+            error_traceback = traceback.format_exc()
             logger.error(f"document embedding, failed:{doc.doc_name}, {str(e)}")
+            logger.error(f"Full traceback:\n{error_traceback}")
         return self._document_dao.update_knowledge_document(doc)
 
     def get_space_context(self, space_id):

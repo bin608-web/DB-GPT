@@ -4,12 +4,14 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from dbgpt.model.proxy.llms.aimlapi import AimlapiLLMClient
+    from dbgpt.model.proxy.llms.burncloud import BurnCloudLLMClient
     from dbgpt.model.proxy.llms.chatgpt import OpenAILLMClient
     from dbgpt.model.proxy.llms.claude import ClaudeLLMClient
     from dbgpt.model.proxy.llms.deepseek import DeepseekLLMClient
     from dbgpt.model.proxy.llms.gemini import GeminiLLMClient
     from dbgpt.model.proxy.llms.gitee import GiteeLLMClient
     from dbgpt.model.proxy.llms.infiniai import InfiniAILLMClient
+    from dbgpt.model.proxy.llms.minimax import MiniMaxLLMClient
     from dbgpt.model.proxy.llms.moonshot import MoonshotLLMClient
     from dbgpt.model.proxy.llms.ollama import OllamaLLMClient
     from dbgpt.model.proxy.llms.siliconflow import SiliconFlowLLMClient
@@ -23,6 +25,7 @@ if TYPE_CHECKING:
 def __lazy_import(name):
     module_path = {
         "OpenAILLMClient": "dbgpt.model.proxy.llms.chatgpt",
+        "BurnCloudLLMClient": "dbgpt.model.proxy.llms.burncloud",
         "ClaudeLLMClient": "dbgpt.model.proxy.llms.claude",
         "GeminiLLMClient": "dbgpt.model.proxy.llms.gemini",
         "AimlapiLLMClient": "dbgpt.model.proxy.llms.aimlapi",
@@ -37,6 +40,7 @@ def __lazy_import(name):
         "DeepseekLLMClient": "dbgpt.model.proxy.llms.deepseek",
         "GiteeLLMClient": "dbgpt.model.proxy.llms.gitee",
         "InfiniAILLMClient": "dbgpt.model.proxy.llms.infiniai",
+        "MiniMaxLLMClient": "dbgpt.model.proxy.llms.minimax",
     }
 
     if name in module_path:
@@ -52,6 +56,7 @@ def __getattr__(name):
 
 __all__ = [
     "OpenAILLMClient",
+    "BurnCloudLLMClient",
     "ClaudeLLMClient",
     "GeminiLLMClient",
     "TongyiLLMClient",
@@ -66,4 +71,5 @@ __all__ = [
     "DeepseekLLMClient",
     "GiteeLLMClient",
     "InfiniAILLMClient",
+    "MiniMaxLLMClient",
 ]
